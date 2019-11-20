@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	inviteplugin "github.com/cytobot/Cyto.Plugins/invite"
 	statsplugin "github.com/cytobot/Cyto.Plugins/stats"
@@ -41,6 +42,8 @@ func main() {
 
 	listener.bot = bot
 
+	go setupHealthCheckInterval(listener)
+
 	lc := listener.nats.Subscribe(listener.id)
 
 	c := make(chan os.Signal, 1)
@@ -50,11 +53,11 @@ out:
 	for {
 		select {
 		case <-c:
-			bot.Client.Session.Close()
 			log.Println("Shutting down...")
+			bot.Client.Session.Close()
+			listener.nats.Shutdown()
 			break out
-		case <-lc:
-			msg := <-lc
+		case msg := <-lc:
 
 			var data ListenerQuery
 			err := json.Unmarshal(msg.Data, &data)
@@ -143,4 +146,20 @@ func getManagerClient() *ManagerClient {
 	log.Println("Connected to manager client")
 
 	return client
+}
+
+func setupHealthCheckInterval(state *listenerState) {
+	ticker := time.NewTicker(30 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				state.SendHealthMessage()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 }

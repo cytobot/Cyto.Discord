@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	nats "github.com/nats-io/nats.go"
 )
@@ -24,6 +25,12 @@ type WorkerMessage struct {
 	Payload   interface{}
 }
 
+//HealthMessage is sent to the Manager service
+type HealthMessage struct {
+	ID        string
+	Timestamp time.Time
+}
+
 //ListenerQuery is the expected data to send to a discord listener
 type ListenerQuery struct {
 	Type  string
@@ -36,8 +43,6 @@ func NewNatsClient(endpoint string) (*NatsClient, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//defer client.Drain()
 
 	return &NatsClient{
 		client: client,
@@ -72,7 +77,6 @@ func (c *NatsClient) Subscribe(subject string) <-chan *nats.Msg {
 	if err != nil {
 		panic(fmt.Sprintf("[NATS client error] %s", err))
 	}
-	defer sub.Drain()
 
 	c.subscriptions = append(c.subscriptions, sub)
 
