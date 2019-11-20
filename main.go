@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"time"
 
 	inviteplugin "github.com/cytobot/Cyto.Plugins/invite"
 	statsplugin "github.com/cytobot/Cyto.Plugins/stats"
@@ -42,9 +40,8 @@ func main() {
 
 	listener.bot = bot
 
-	go setupHealthCheckInterval(listener)
-
-	lc := listener.nats.Subscribe(listener.id)
+	go listener.setupHealthCheckInterval()
+	go listener.setupDiscordInfoSubscription()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -57,35 +54,6 @@ out:
 			bot.Client.Session.Close()
 			listener.nats.Shutdown()
 			break out
-		case msg := <-lc:
-
-			var data ListenerQuery
-			err := json.Unmarshal(msg.Data, &data)
-			if err != nil {
-				go listener.nats.Publish(msg.Reply, err)
-				return
-			}
-
-			var results interface{}
-
-			switch data.Type {
-			case "guild":
-				guild, err := listener.bot.Client.Guild(data.Value)
-				if err != nil {
-					results = err
-				} else {
-					results = guild
-				}
-			case "channel":
-				channel, err := listener.bot.Client.Channel(data.Value)
-				if err != nil {
-					results = err
-				} else {
-					results = channel
-				}
-			}
-
-			go listener.nats.Publish(msg.Reply, results)
 		}
 	}
 }
@@ -146,20 +114,4 @@ func getManagerClient() *ManagerClient {
 	log.Println("Connected to manager client")
 
 	return client
-}
-
-func setupHealthCheckInterval(state *listenerState) {
-	ticker := time.NewTicker(30 * time.Second)
-	quit := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				state.SendHealthMessage()
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
 }

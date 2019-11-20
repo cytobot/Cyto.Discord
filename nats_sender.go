@@ -22,7 +22,23 @@ func (l *listenerState) SendWorkerMessage(group string, cmd string, msg discordg
 	l.nats.Publish("discord_work", content)
 }
 
-func (l *listenerState) SendHealthMessage() {
+func (l *listenerState) setupHealthCheckInterval() {
+	ticker := time.NewTicker(30 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				sendHealthMessage(l)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func sendHealthMessage(l *listenerState) {
 	content := &HealthMessage{
 		ID:        l.id,
 		Timestamp: time.Now().UTC(),
