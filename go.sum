@@ -7,6 +7,8 @@ github.com/cytobot/Cyto.Plugins/invite v0.0.0-20190823160500-bd2618106d52 h1:ZG5
 github.com/cytobot/Cyto.Plugins/invite v0.0.0-20190823160500-bd2618106d52/go.mod h1:9dW36bUw7Jr2Az/k5JLWatLrzvArmSDxyS7Ul4GCacs=
 github.com/cytobot/Cyto.Plugins/stats v0.0.0-20190823160500-bd2618106d52 h1:Mef7IFH04MY0ZPT71XCQC196Ec7kCvEL1EXVJVdG0GI=
 github.com/cytobot/Cyto.Plugins/stats v0.0.0-20190823160500-bd2618106d52/go.mod h1:OLCIauvkeHa/qXNXnBvzsbZpqnC3oWSYw1DM+xyD5eA=
+github.com/cytobot/messaging v0.0.0-20191122211147-649eed74ba79 h1:5+isujajZ2oQh9lolpAoD9zg2ea68dEo1IzBC1HttlQ=
+github.com/cytobot/messaging v0.0.0-20191122211147-649eed74ba79/go.mod h1:3aiMtR82jy9rwQgJKrblUUfiyCeqm8IWa/Pq11jye8o=
 github.com/cytobot/rpc v0.0.0-20191017202753-29b4a4073e9d h1:55WkYQXItQ/k0O2FY6huEJ7R+51uro36qxfq748J7hM=
 github.com/cytobot/rpc v0.0.0-20191017202753-29b4a4073e9d/go.mod h1:KsA17vzHTw4qs1q4kK3BKuqo/pzQ0gZ7amvyeZqLSrg=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=

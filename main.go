@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
 	inviteplugin "github.com/cytobot/Cyto.Plugins/invite"
 	statsplugin "github.com/cytobot/Cyto.Plugins/stats"
@@ -17,17 +18,20 @@ const VERSION = "0.1.0"
 
 type listenerState struct {
 	id            string
+	shardID       int
 	bot           *discordgobot.Gobot
-	nats          *NatsClient
+	nats          *NatsManager
 	managerclient *ManagerClient
 }
 
 func main() {
 	listener := &listenerState{
 		id:            shortuuid.New(),
-		nats:          getNatsClient(),
+		shardID:       getShardID(),
 		managerclient: getManagerClient(),
 	}
+
+	listener.nats = getNatsManager(listener)
 
 	//definitions, err := listener.managerclient.GetCommandDefinitions()
 
@@ -40,8 +44,8 @@ func main() {
 
 	listener.bot = bot
 
-	go listener.setupHealthCheckInterval()
-	go listener.setupDiscordInfoSubscription()
+	go listener.nats.StartHealthCheckInterval()
+	go listener.nats.StartCommandUpdateListener()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -56,6 +60,15 @@ out:
 			break out
 		}
 	}
+}
+
+func getShardID() int {
+	envShardID := os.Getenv("DiscordToken")
+	if envShardID != "" {
+		shardId, _ := strconv.ParseInt(envShardID, 10, 64)
+		return int(shardId)
+	}
+	return -1
 }
 
 func getDiscordBot(state interface{}) *discordgobot.Gobot {
@@ -82,14 +95,14 @@ func getDiscordBot(state interface{}) *discordgobot.Gobot {
 	return bot
 }
 
-func getNatsClient() *NatsClient {
+func getNatsManager(state *listenerState) *NatsManager {
 	natsEndpoint := os.Getenv("NatsEndpoint")
 
 	if natsEndpoint == "" {
 		panic("No nats endpoint provided.")
 	}
 
-	client, err := NewNatsClient(natsEndpoint)
+	client, err := NewNatsManager(natsEndpoint, state)
 	if err != nil {
 		panic(fmt.Sprintf("[NATS error] %s", err))
 	}
