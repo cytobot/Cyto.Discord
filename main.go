@@ -7,21 +7,17 @@ import (
 	"os/signal"
 	"strconv"
 
-	inviteplugin "github.com/cytobot/Cyto.Plugins/invite"
-	statsplugin "github.com/cytobot/Cyto.Plugins/stats"
 	"github.com/lampjaw/discordgobot"
 	"github.com/lithammer/shortuuid"
 )
 
-// VERSION is the application version
-const VERSION = "0.1.0"
-
 type listenerState struct {
-	id            string
-	shardID       int
-	bot           *discordgobot.Gobot
-	nats          *NatsManager
-	managerclient *ManagerClient
+	id             string
+	shardID        int
+	bot            *discordgobot.Gobot
+	nats           *NatsManager
+	managerclient  *ManagerClient
+	commandMonitor *CommandMonitor
 }
 
 func main() {
@@ -31,21 +27,14 @@ func main() {
 		managerclient: getManagerClient(),
 	}
 
+	listener.bot = getDiscordBot(listener)
 	listener.nats = getNatsManager(listener)
-
-	//definitions, err := listener.managerclient.GetCommandDefinitions()
-
-	bot := getDiscordBot(listener)
-
-	bot.RegisterPlugin(inviteplugin.New())
-	bot.RegisterPlugin(statsplugin.New(VERSION, true))
-
-	bot.Open()
-
-	listener.bot = bot
+	listener.commandMonitor = getCommandMonitor(listener.managerclient, listener.bot, listener.nats)
 
 	go listener.nats.StartHealthCheckInterval()
 	go listener.nats.StartCommandUpdateListener()
+
+	listener.bot.Open()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -55,7 +44,7 @@ out:
 		select {
 		case <-c:
 			log.Println("Shutting down...")
-			bot.Client.Session.Close()
+			listener.bot.Client.Session.Close()
 			listener.nats.Shutdown()
 			break out
 		}
@@ -82,8 +71,9 @@ func getDiscordBot(state interface{}) *discordgobot.Gobot {
 	clientID := os.Getenv("DiscordClientId")
 
 	config := &discordgobot.GobotConf{
-		OwnerUserID: ownerUserID,
-		ClientID:    clientID,
+		OwnerUserID:   ownerUserID,
+		ClientID:      clientID,
+		CommandPrefix: "cy?",
 	}
 
 	bot, err := discordgobot.NewBot(token, config, state)
@@ -127,4 +117,15 @@ func getManagerClient() *ManagerClient {
 	log.Println("Connected to manager client")
 
 	return client
+}
+
+func getCommandMonitor(client *ManagerClient, bot *discordgobot.Gobot, natsManager *NatsManager) *CommandMonitor {
+	monitor, err := NewCommandMonitor(client, bot, natsManager)
+	if err != nil {
+		panic(fmt.Sprintf("[Command Monitor error] %s", err))
+	}
+
+	log.Printf("Retrieved %d command definitions", len(monitor.commandDefinitions))
+
+	return monitor
 }
