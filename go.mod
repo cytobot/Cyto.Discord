@@ -7,7 +7,7 @@ require (
 	github.com/cytobot/rpc v0.0.0-20191202022145-949a7a2a797a
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/lampjaw/discordgobot v0.0.0-20191202004931-4202b8328873
+	github.com/lampjaw/discordgobot v0.4.0
 	github.com/lithammer/shortuuid v3.0.0+incompatible
 	github.com/nats-io/nats-server/v2 v2.0.4 // indirect
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586 // indirect

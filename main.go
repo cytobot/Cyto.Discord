@@ -14,6 +14,7 @@ import (
 type listenerState struct {
 	id             string
 	shardID        int
+	shardCount     int
 	bot            *discordgobot.Gobot
 	nats           *NatsManager
 	managerclient  *ManagerClient
@@ -24,6 +25,7 @@ func main() {
 	listener := &listenerState{
 		id:            shortuuid.New(),
 		shardID:       getShardID(),
+		shardCount:    getShardCount(),
 		managerclient: getManagerClient(),
 	}
 
@@ -34,7 +36,7 @@ func main() {
 	go listener.nats.StartHealthCheckInterval()
 	go listener.nats.StartCommandUpdateListener()
 
-	listener.bot.Open()
+	listener.bot.OpenShard(listener.shardCount, listener.shardID)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -52,12 +54,21 @@ out:
 }
 
 func getShardID() int {
-	envShardID := os.Getenv("DiscordToken")
+	envShardID := os.Getenv("ShardId")
 	if envShardID != "" {
-		shardId, _ := strconv.ParseInt(envShardID, 10, 64)
-		return int(shardId)
+		shardID, _ := strconv.ParseInt(envShardID, 10, 64)
+		return int(shardID)
 	}
 	return -1
+}
+
+func getShardCount() int {
+	envShardCount := os.Getenv("ShardCount")
+	if envShardCount != "" {
+		shardCount, _ := strconv.ParseInt(envShardCount, 10, 64)
+		return int(shardCount)
+	}
+	return 1
 }
 
 func getDiscordBot(state interface{}) *discordgobot.Gobot {
