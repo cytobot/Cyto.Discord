@@ -63,6 +63,7 @@ func (m *NatsManager) SendWorkerMessage(group string, cmd string, msg discordgob
 	content := &pbs.DiscordWorkRequest{
 		Type:      group,
 		Command:   cmd,
+		MessageID: msg.MessageID(),
 		ChannelID: msg.Channel(),
 		GuildID:   guildID,
 		UserID:    msg.UserID(),

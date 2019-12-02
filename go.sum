@@ -5,6 +5,8 @@ github.com/bwmarrin/discordgo v0.19.0/go.mod h1:O9S4p+ofTFwB02em7jkpkV8M3R0/PUVO
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cytobot/messaging v0.0.0-20191202021824-3b299c1b7404 h1:OZCwTH+OZ6DNs4NDOA5BNKA29wj2D0ULwBqy3UBJJAA=
 github.com/cytobot/messaging v0.0.0-20191202021824-3b299c1b7404/go.mod h1:3aiMtR82jy9rwQgJKrblUUfiyCeqm8IWa/Pq11jye8o=
+github.com/cytobot/messaging v0.0.0-20191202024925-27c2a05d8b75 h1:oQNO4Pv+9UKlxRvXvTTa7ZnJxntxfrgoH9iuEbSR5Gw=
+github.com/cytobot/messaging v0.0.0-20191202024925-27c2a05d8b75/go.mod h1:3aiMtR82jy9rwQgJKrblUUfiyCeqm8IWa/Pq11jye8o=
 github.com/cytobot/rpc v0.0.0-20191202022145-949a7a2a797a h1:qZJkkSxTj+QyGNWb5CYMMbRqF6Zm1dDyqRpfCaTnLFg=
 github.com/cytobot/rpc v0.0.0-20191202022145-949a7a2a797a/go.mod h1:KsA17vzHTw4qs1q4kK3BKuqo/pzQ0gZ7amvyeZqLSrg=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
