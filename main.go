@@ -35,6 +35,7 @@ func main() {
 
 	go listener.nats.StartHealthCheckInterval()
 	go listener.nats.StartCommandUpdateListener()
+	go listener.nats.StartDiscordInformationListener()
 
 	listener.bot.OpenShard(listener.shardCount, listener.shardID)
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"runtime"
 	"time"
 
@@ -9,9 +10,11 @@ import (
 	pbd "github.com/cytobot/messaging/transport/discord"
 	pbm "github.com/cytobot/messaging/transport/manager"
 	pbs "github.com/cytobot/messaging/transport/shared"
+	pbw "github.com/cytobot/messaging/transport/worker"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/lampjaw/discordgobot"
+	"github.com/nats-io/nats.go"
 )
 
 type NatsManager struct {
@@ -55,6 +58,75 @@ func (m *NatsManager) StartCommandUpdateListener() error {
 	}()
 
 	return nil
+}
+
+func (m *NatsManager) StartDiscordInformationListener() error {
+	subChan, err := m.client.ChanSubscribe(m.listenerState.id)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case msg := <-subChan:
+				req := &pbw.DiscordInformationRequest{}
+				json.Unmarshal(msg.Data, req)
+
+				payload := make(map[string]string, 0)
+
+				switch req.Type {
+				case "channel":
+					channel, err := m.listenerState.bot.Client.DiscordClient.Channel(req.Payload["channelID"])
+					if err != nil {
+						payload["error"] = fmt.Sprint(err)
+						break
+					}
+
+					bytes, _ := json.Marshal(channel)
+					payload["channel"] = string(bytes)
+				case "guild":
+					guild, err := m.listenerState.bot.Client.DiscordClient.Guild(req.Payload["guildID"])
+					if err != nil {
+						payload["error"] = fmt.Sprint(err)
+						break
+					}
+
+					bytes, _ := json.Marshal(guild)
+					payload["guild"] = string(bytes)
+				case "user":
+					user, err := m.listenerState.bot.Client.DiscordClient.Session.User(req.Payload["userID"])
+					if err != nil {
+						payload["error"] = fmt.Sprint(err)
+						break
+					}
+
+					bytes, _ := json.Marshal(user)
+					payload["user"] = string(bytes)
+
+					if req.Payload["channelID"] != "" {
+						payload["nickname"] = m.listenerState.bot.Client.DiscordClient.NicknameForID(user.ID, user.Username, req.Payload["channelID"])
+					}
+				}
+
+				m.sendRequestResponse(msg, payload)
+
+			case <-m.shutdownChan:
+				return
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (m *NatsManager) sendRequestResponse(msg *nats.Msg, payload map[string]string) error {
+	data := &pbd.DiscordInformationResponse{
+		Timestamp:  mapToProtoTimestamp(time.Now().UTC()),
+		InstanceID: m.listenerState.id,
+		Payload:    payload,
+	}
+	return m.client.Publish(msg.Reply, data)
 }
 
 func (m *NatsManager) SendWorkerMessage(group string, cmd string, msg discordgobot.Message, parameters map[string]string) {
